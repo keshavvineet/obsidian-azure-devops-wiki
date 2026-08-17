@@ -694,6 +694,12 @@ Found while fixing, not reported:
 | 37 | "Comments is still missing — if we can add it on the side where we can add comments, see comments." | ✅ Phase 12 — **Page activity** pane: comments (ADO REST, needs a PAT with Wiki Read & Write) plus this page's git history. Untested against the live API — the vault has no PAT yet |
 | 38 | "Confirm from the syntax mapping that everything is working, and do anything pending." | ✅ Phase 12 — audited every row. Fixed: whole-line inserts now get the blank lines they need, the mermaid button writes a fence instead of `:::`, the work-item picker adds a trailing space. Documented as deliberate or unbuilt: mention picker (P3), note-embed conversion, dataview/MathJax rules (SYNTAX-MAPPING §3) |
 
+### Round 9 (2026-08-17)
+
+| # | Note | State |
+|---|---|---|
+| 39 | "How will the users find what branch their wiki is on?" | ✅ **They don't have to — the plugin works it out.** Azure DevOps never shows the branch of a provisioned wiki (the portal's *Clone wiki* dialog gives a URL and no branch), so requiring the setting was asking for something the product hides. `git/wikiBranch.branchToAdopt` now adopts whatever branch the clone is on **provided it tracks an upstream**; previously only `wikiMain`/`wikiMaster` were adopted, so every "publish code as wiki" repository failed its first Sync with an error telling the user to type in a name they could not look up. Verified against real git: an ADO wiki clone reports `branch.upstream origin/wikiMaster`, a clone on an arbitrary branch reports `origin/docs`, and a local scratch branch reports **no** upstream line — so a clone parked on somebody's experiment is still left alone and still gets the wrong-branch guard rail (FR-7.7) |
+
 ---
 
 ## Feature requests

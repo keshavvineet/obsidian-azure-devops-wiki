@@ -15,13 +15,10 @@ import {
   WorkspaceLeaf,
 } from "obsidian";
 import type { EditorState } from "@codemirror/state";
-import {
-  DEFAULT_WIKI_BRANCH,
-  OBSIDIAN_CONFIG_DIR,
-  PROVISIONED_WIKI_BRANCHES,
-} from "./constants";
+import { DEFAULT_WIKI_BRANCH, OBSIDIAN_CONFIG_DIR } from "./constants";
 import { GitService } from "./git/gitService";
 import { dirtyCount, type ChangeKind } from "./git/gitStatus";
+import { branchToAdopt } from "./git/wikiBranch";
 import { GitStatusBar } from "./git/gitStatusBar";
 import { SyncOrchestrator } from "./git/syncOrchestrator";
 import { ObsidianSyncUi } from "./git/syncUi";
@@ -326,17 +323,22 @@ export default class AdoWikiPlugin extends Plugin {
   }
 
   /**
-   * Wikis provisioned before Azure DevOps renamed the default branch are still on
-   * `wikiMaster` (ADO-WIKI-FORMAT §5). Blocking every sync on a guessed default would be
-   * unhelpful, so as long as the user has not chosen a branch themselves, the plugin adopts
-   * the provisioned branch the clone is actually on.
+   * Adopt the branch this clone is actually on, so nobody has to look up something Azure DevOps
+   * does not show them. The decision — and why an untracked or detached checkout is left alone —
+   * is in `branchToAdopt`.
+   *
+   * This reads the full status rather than just `currentBranch()` because the upstream is the
+   * signal that the branch came from the server. The status bar runs the same query moments
+   * later, so no new kind of git call is introduced.
    */
   private async adoptWikiBranch(): Promise<void> {
-    if (!this.git || this.settings.wikiBranch !== DEFAULT_WIKI_BRANCH) return;
+    if (!this.git) return;
 
-    const branch = await this.git.currentBranch().catch(() => null);
-    if (branch === null || branch === this.settings.wikiBranch) return;
-    if (!PROVISIONED_WIKI_BRANCHES.includes(branch)) return;
+    const status = await this.git.status().catch(() => null);
+    if (status === null) return;
+
+    const branch = branchToAdopt(status, this.settings.wikiBranch, DEFAULT_WIKI_BRANCH);
+    if (branch === null) return;
 
     this.settings.wikiBranch = branch;
     await this.saveSettings();

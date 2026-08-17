@@ -17,14 +17,14 @@ export const WINDOWS_RESERVED_NAMES: ReadonlySet<string> = new Set([
   "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
 ]);
 
+/**
+ * What a wiki provisioned today is on. Only a starting point: wikis created before Azure DevOps
+ * renamed the default branch are still on `wikiMaster` and were never migrated, and a "publish
+ * code as wiki" repository uses any branch at all (ADO-WIKI-FORMAT §5) — so this is the value
+ * `branchToAdopt` treats as "the user has not chosen", not an assumption about the wiki.
+ */
 export const DEFAULT_WIKI_BRANCH = "wikiMain";
 
-/**
- * Branch names Azure DevOps itself gives a provisioned wiki. Wikis created before the
- * default-branch rename are still on `wikiMaster` and were never migrated (ADO-WIKI-FORMAT §5),
- * so the plugin adopts whichever of these a clone is actually on rather than refusing to sync.
- */
-export const PROVISIONED_WIKI_BRANCHES: readonly string[] = ["wikiMain", "wikiMaster"];
 export const ATTACHMENTS_DIR = ".attachments";
 export const ORDER_FILE = ".order";
 /** Obsidian's own per-vault configuration — never wiki content, never staged for a sync. */

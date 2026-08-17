@@ -1,0 +1,44 @@
+import type { GitStatus } from "./gitStatus";
+
+/**
+ * Working out which branch a wiki clone lives on, so the user never has to (FR-7.7).  [PURE]
+ *
+ * Azure DevOps does not tell anyone the branch of a provisioned wiki: the Wiki hub never shows
+ * it, and the portal's *Clone wiki* dialog hands out a URL with no branch name. Finding it means
+ * knowing to open the hidden `{project}.wiki` repository by direct URL — so making the user
+ * supply it is asking for something the product does not show them (ADO-WIKI-FORMAT §5).
+ *
+ * Git already knows. `git clone` checks out whatever the server calls the default branch, which
+ * for a provisioned wiki *is* the wiki branch, and for a "publish code as wiki" repository is the
+ * branch the clone was taken from. So the branch the clone is sitting on is the answer, and the
+ * plugin adopts it rather than asking.
+ *
+ * Two rules stop that from adopting something wrong:
+ *
+ *   - **A branch must track an upstream.** That is what distinguishes a branch the server gave us
+ *     from a scratch branch somebody made locally, so a clone parked on an experiment is left
+ *     alone and still gets the "you are on the wrong branch" guard rail.
+ *   - **A branch the user chose themselves is never overridden** — adoption only fills in a
+ *     setting still sitting at its factory default.
+ */
+export function branchToAdopt(
+  status: GitStatus,
+  configuredBranch: string,
+  factoryDefault: string,
+): string | null {
+  // The user has named a branch; it is not ours to second-guess.
+  if (configuredBranch !== factoryDefault) return null;
+
+  // A detached HEAD is not a branch, and syncing needs one — `syncOrchestrator` says so in
+  // words the user can act on, which is more use than silently adopting nothing.
+  if (status.detached || status.branch === null) return null;
+
+  // No upstream means nothing on the server corresponds to this branch, so it cannot be the
+  // wiki's branch — it is a local scratch branch.
+  if (status.upstream === null) return null;
+
+  // Already correct: writing the setting would only dirty `data.json` on every start-up.
+  if (status.branch === configuredBranch) return null;
+
+  return status.branch;
+}

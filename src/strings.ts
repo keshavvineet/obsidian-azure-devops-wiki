@@ -312,9 +312,9 @@ export const S = {
       "prefer to manage this repository with your own git tooling.",
     wikiBranchName: "Wiki branch",
     wikiBranchDesc:
-      "Refresh and Sync only run on this branch. Provisioned wikis use wikiMain, or " +
-      "wikiMaster if they were created before Azure DevOps renamed it — the plugin picks " +
-      'that up automatically. A "publish code as wiki" repository can use any branch.',
+      "Refresh and Sync only run on this branch. You should not need to set this: the plugin " +
+      "reads the branch your clone is on when it starts, which is the one Azure DevOps gave " +
+      "it. Fill it in only to pin a different branch — then the plugin stops adjusting it.",
     autoRefreshOnOpenName: "Refresh when the vault opens",
     autoRefreshOnOpenDesc: "Pull the latest pages shortly after Obsidian starts.",
     autoRefreshIntervalName: "Refresh every (minutes)",
