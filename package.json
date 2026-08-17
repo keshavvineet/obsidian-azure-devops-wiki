@@ -1,6 +1,6 @@
 {
   "name": "azure-devops-wiki",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Obsidian plugin: edit a git-cloned Azure DevOps wiki as a first-class vault.",
   "main": "main.js",
   "scripts": {
