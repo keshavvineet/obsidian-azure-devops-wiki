@@ -1,7 +1,7 @@
 {
   "id": "azure-devops-wiki",
   "name": "Azure DevOps Wiki",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "minAppVersion": "1.5.0",
   "description": "Edit a git-cloned Azure DevOps wiki as a first-class vault: decoded page titles, .order page tree, ADO formatting toolbar, work item links, and one-click git refresh/sync.",
   "author": "Vineet Khurana",
