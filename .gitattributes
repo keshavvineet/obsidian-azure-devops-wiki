@@ -1,0 +1,8 @@
+# Normalise to LF in the repository. Without this, a Windows checkout stores CRLF and every
+# file looks modified for ever on the next platform that touches it — the same trap the plugin
+# itself has to work around in a wiki clone (see ARCHITECTURE §4.5a).
+* text=auto eol=lf
+
+# Binary: never touch the bytes.
+*.png binary
+*.gz  binary

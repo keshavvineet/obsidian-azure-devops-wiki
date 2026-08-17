@@ -1,0 +1,19 @@
+node_modules/
+main.js
+*.js.map
+dist/
+
+# The manual-test vault is a *real clone of a real ADO wiki* with its own .git, so it can
+# never be tracked here: git records a nested repository as a gitlink (160000 commit <sha>),
+# which both leaks that wiki's content and hands every cloner a broken submodule pointer.
+# Recreate it locally by cloning a disposable wiki — see docs/TEST-PLAN.md.
+test-vault/
+
+# Chrome performance traces captured while profiling
+Performance Trace/
+
+# Scratch screenshots dropped at the repo root while debugging
+/image*.png
+
+.DS_Store
+Thumbs.db

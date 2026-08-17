@@ -1,0 +1,1118 @@
+/* Azure DevOps Wiki plugin styles.
+   Naming convention: all classes prefixed with `adowiki-`. */
+
+/* --------------------------------------------------------------------- palette
+
+   Everything the plugin draws takes its colour from these six tokens, and every token is
+   defined in terms of an Obsidian theme variable — so a light theme, a dark theme and a
+   high-contrast theme all get a palette that belongs to them rather than one hard-coded here.
+
+   `color-mix` keeps the tinted surfaces at a fixed distance from whatever background the
+   theme uses, instead of a fixed grey that disappears in one theme and shouts in another. */
+.theme-light,
+.theme-dark {
+  --adowiki-accent: var(--text-accent);
+  --adowiki-surface: color-mix(in srgb, var(--background-secondary) 88%, var(--text-accent) 12%);
+  --adowiki-border: color-mix(in srgb, var(--background-modifier-border) 70%, var(--text-accent) 30%);
+  --adowiki-error: var(--text-error);
+  --adowiki-warning: var(--text-warning);
+  --adowiki-muted: var(--text-muted);
+
+  /* Change marks (explorer, wiki tree, changes pane). Obsidian's named colours where the theme
+     defines them, its semantic text colours where it does not — so "new" is recognisably green
+     and "deleted" recognisably red in every theme, and nothing is hard-coded. */
+  --adowiki-new: var(--color-green, var(--text-success, var(--text-accent)));
+  --adowiki-edited: var(--color-orange, var(--text-warning));
+  --adowiki-gone: var(--color-red, var(--text-error));
+}
+
+.adowiki-title-modal__feedback {
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-2-1);
+  margin: var(--size-4-2) 0;
+  min-height: var(--size-4-4);
+  font-size: var(--font-ui-smaller);
+  line-height: var(--line-height-tight);
+}
+
+.adowiki-feedback--error {
+  color: var(--text-error);
+}
+
+.adowiki-feedback--warning {
+  color: var(--text-warning);
+}
+
+.adowiki-feedback--info {
+  color: var(--text-muted);
+  font-family: var(--font-monospace);
+}
+
+/* ------------------------------------------------------------ wiki page tree */
+
+.adowiki-tree {
+  padding: var(--size-4-2) 0;
+}
+
+/* Scoped with the container class so a theme's own .tree-item-self rules cannot win. */
+.adowiki-tree .adowiki-tree__row {
+  /* Depth is set per row, so nesting needs no per-level CSS. */
+  padding-left: calc(var(--size-4-2) + var(--adowiki-tree-depth, 0) * var(--size-4-4));
+  display: flex;
+  align-items: center;
+  gap: var(--size-2-1);
+  border-top: 1px solid transparent;
+  border-bottom: 1px solid transparent;
+}
+
+/* The rows carry their own indent, so the container must not add another one. */
+.adowiki-tree .adowiki-tree__children {
+  margin-inline-start: 0;
+  padding-inline-start: 0;
+  border-inline-start: none;
+}
+
+.adowiki-tree__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--size-4-4);
+  color: var(--text-faint);
+}
+
+.adowiki-tree__toggle:hover {
+  color: var(--text-muted);
+}
+
+.adowiki-tree__toggle--leaf {
+  /* Keeps titles aligned whether or not a page has subpages. */
+  pointer-events: none;
+}
+
+.adowiki-tree__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adowiki-tree__row--dragging {
+  opacity: 0.5;
+}
+
+.adowiki-tree__row--drop-before {
+  border-top-color: var(--interactive-accent);
+}
+
+.adowiki-tree__row--drop-after {
+  border-bottom-color: var(--interactive-accent);
+}
+
+/* The page you are reading, made obvious: an accent stripe rather than a grey highlight. */
+.adowiki-tree .adowiki-tree__row.is-active {
+  background-color: color-mix(in srgb, var(--text-accent) 14%, transparent);
+  box-shadow: inset 2px 0 0 0 var(--adowiki-accent);
+}
+
+.adowiki-tree .adowiki-tree__row.is-active .adowiki-tree__title {
+  color: var(--adowiki-accent);
+  font-weight: var(--font-semibold);
+}
+
+.adowiki-tree__empty {
+  padding: var(--size-4-2) var(--size-4-3);
+  color: var(--text-muted);
+}
+
+.adowiki-tree__empty-hint {
+  padding: 0 var(--size-4-3);
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+/* ------------------------------------------------------- git status & sync */
+
+.adowiki-status {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2-1);
+}
+
+.adowiki-status__icon {
+  display: inline-flex;
+}
+
+.adowiki-status__icon svg {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+.adowiki-status--busy .adowiki-status__icon {
+  animation: adowiki-spin 1.2s linear infinite;
+  color: var(--text-accent);
+}
+
+@keyframes adowiki-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.adowiki-conflict__list {
+  max-height: 40vh;
+  overflow-y: auto;
+  margin: var(--size-4-2) 0;
+  border-top: 1px solid var(--background-modifier-border);
+}
+
+.adowiki-conflict__list .setting-item {
+  padding: var(--size-4-2) 0;
+}
+
+.adowiki-conflict__hint {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  margin-bottom: var(--size-4-2);
+}
+
+.adowiki-conflict__bulk {
+  border-top: none;
+  padding-top: 0;
+}
+
+/* ------------------------------------------------- ADO syntax in the page body */
+
+/* Links Obsidian would treat as external because they start with '/'. */
+.adowiki-link.is-unresolved {
+  color: var(--text-muted);
+  text-decoration: underline dotted;
+  cursor: help;
+}
+
+.adowiki-image {
+  max-width: 100%;
+}
+
+/* The embed we rebuild in place of Obsidian's unresolvable one (readingModeProcessor.rewriteImages).
+   It carries none of Obsidian's embed classes on purpose, so it has to lay itself out. */
+.adowiki-embed {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.adowiki-embed img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+/* A paragraph re-rendered because an `@<Name>` mention would otherwise be eaten as an HTML tag.
+   It replaces a <p>, so it has to carry a paragraph's spacing. */
+.adowiki-mention-block > p:first-child {
+  margin-top: 0;
+}
+
+.adowiki-mention-block > p:last-child {
+  margin-bottom: 0;
+}
+
+/* Work items, pull requests and mentions — chips, so a reference reads as a thing you can
+   click rather than as a number that happens to be blue. */
+.adowiki-workitem,
+.adowiki-pullrequest,
+.adowiki-mention {
+  padding: 0 0.35em;
+  border-radius: var(--radius-s);
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.adowiki-workitem,
+.adowiki-pullrequest {
+  color: var(--adowiki-accent);
+  background-color: color-mix(in srgb, var(--text-accent) 12%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text-accent) 25%, transparent);
+}
+
+.adowiki-workitem:hover,
+.adowiki-pullrequest:hover {
+  background-color: color-mix(in srgb, var(--text-accent) 22%, transparent);
+  text-decoration: none;
+}
+
+.adowiki-workitem--unlinked,
+.adowiki-pullrequest--unlinked {
+  color: var(--adowiki-muted);
+  background-color: var(--background-modifier-hover);
+  box-shadow: none;
+  cursor: help;
+}
+
+.adowiki-mention {
+  background-color: var(--background-modifier-hover);
+  color: var(--text-normal);
+}
+
+/* Generated table of contents and subpage list. */
+.adowiki-toc,
+.adowiki-tosp {
+  margin: var(--size-4-3) 0;
+  padding: var(--size-4-2) var(--size-4-3);
+  border: 1px solid var(--adowiki-border);
+  border-left: 3px solid var(--adowiki-accent);
+  background-color: var(--adowiki-surface);
+  border-radius: var(--radius-s);
+}
+
+.adowiki-toc__title,
+.adowiki-tosp__title {
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--adowiki-accent);
+  margin-bottom: var(--size-2-2);
+}
+
+.adowiki-toc__list,
+.adowiki-tosp__list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.adowiki-toc__item {
+  /* Heading depth is set per row, so nesting needs no per-level CSS. */
+  padding-left: calc(var(--adowiki-toc-depth, 0) * var(--size-4-4));
+  line-height: var(--line-height-tight);
+}
+
+.adowiki-toc__link,
+.adowiki-tosp__link {
+  color: var(--text-normal);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.adowiki-toc__link:hover,
+.adowiki-tosp__link:hover {
+  color: var(--adowiki-accent);
+  text-decoration: underline;
+}
+
+.adowiki-toc__empty,
+.adowiki-tosp__empty {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+/* Placeholders for the ::: blocks only Azure DevOps can render. */
+.adowiki-card {
+  margin: var(--size-4-3) 0;
+  padding: var(--size-4-2) var(--size-4-3);
+  border: 1px dashed var(--adowiki-border);
+  border-radius: var(--radius-s);
+  background-color: var(--adowiki-surface);
+}
+
+.adowiki-card__label {
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--adowiki-muted);
+}
+
+.adowiki-card__hint {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+/* An attachment this clone does not have: a warning, not a decorative placeholder. */
+.adowiki-card--missing {
+  border-color: color-mix(in srgb, var(--adowiki-warning) 45%, var(--background-modifier-border));
+  background-color: color-mix(in srgb, var(--adowiki-warning) 8%, var(--background-secondary));
+}
+
+.adowiki-card--missing .adowiki-card__label {
+  color: var(--adowiki-warning);
+}
+
+.adowiki-mermaid {
+  margin: var(--size-4-3) 0;
+}
+
+/* --------------------------------------------------------- live preview only */
+
+.adowiki-chip {
+  padding: 0 var(--size-2-2);
+  border-radius: var(--radius-s);
+  background-color: var(--background-secondary-alt);
+  color: var(--adowiki-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+/* A widget that replaces whole lines of the editor: it has to sit in the text column and
+   claim the full width, or CodeMirror draws it inline and the layout jumps. */
+.adowiki-cm-block {
+  display: block;
+  width: 100%;
+}
+
+div.adowiki-cm-block {
+  /* CodeMirror gives a block widget no line-height of its own. */
+  line-height: var(--line-height-normal);
+}
+
+/* -------------------------------------------------------------------- toolbar */
+
+.adowiki-toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--size-4-2);
+  flex-wrap: wrap;
+  padding: var(--size-2-2) var(--size-4-2);
+  border-bottom: 1px solid var(--background-modifier-border);
+  background-color: var(--background-secondary);
+}
+
+.adowiki-toolbar--hidden {
+  display: none;
+}
+
+/* An empty tab centres its "No file is open" content with flexbox, which would shrink the row and
+   drag it into the middle. Pin it to the top of the tab instead, so the bar sits in exactly the
+   same place whether or not a page is open. */
+.workspace-leaf-content[data-type="empty"] > .view-content {
+  position: relative;
+}
+
+.workspace-leaf-content[data-type="empty"] > .view-content > .adowiki-toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1;
+}
+
+.adowiki-toolbar__group {
+  display: flex;
+  align-items: center;
+  gap: var(--size-2-1);
+  padding-right: var(--size-4-2);
+  border-right: 1px solid var(--background-modifier-border);
+}
+
+.adowiki-toolbar__group:last-of-type {
+  border-right: none;
+  padding-right: 0;
+}
+
+.adowiki-toolbar__button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--size-4-6);
+  height: var(--size-4-6);
+  border-radius: var(--radius-s);
+  color: var(--icon-color);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.adowiki-toolbar__button:hover {
+  background-color: var(--background-modifier-hover);
+  color: var(--icon-color-hover);
+}
+
+.adowiki-toolbar__heading {
+  font-size: var(--font-ui-smaller);
+  max-width: 8rem;
+}
+
+/* No page open: the row stays, so Get updates / Publish are always in the same place, but the
+   formatting half has nothing to act on and says so. */
+.adowiki-toolbar__button:disabled,
+.adowiki-toolbar__heading:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.adowiki-toolbar__button:disabled:hover {
+  background-color: transparent;
+  color: var(--icon-color);
+}
+
+/* ------------------------------------------- the two sync buttons in the toolbar
+
+   Labelled, not iconographic: which direction a wiki change is travelling is the one thing
+   these users must never have to guess, so each button says a word and shows a count. */
+
+.adowiki-toolbar__sync {
+  display: flex;
+  align-items: center;
+  gap: var(--size-2-2);
+  /* Pushed away from the formatting buttons: this is not formatting. */
+  margin-left: auto;
+  padding-left: var(--size-4-2);
+  border-left: 1px solid var(--background-modifier-border);
+}
+
+.adowiki-toolbar__sync--hidden {
+  display: none;
+}
+
+.adowiki-toolbar__sync-button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2-1);
+  padding: var(--size-2-1) var(--size-4-2);
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  background-color: var(--background-primary);
+  color: var(--text-normal);
+  font-size: var(--font-ui-smaller);
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.adowiki-toolbar__sync-button:hover:not(:disabled) {
+  background-color: var(--background-modifier-hover);
+  border-color: var(--adowiki-border);
+}
+
+.adowiki-toolbar__sync-button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.adowiki-toolbar__sync-icon {
+  display: inline-flex;
+}
+
+.adowiki-toolbar__sync-icon svg {
+  width: var(--icon-s);
+  height: var(--icon-s);
+}
+
+/* There is something waiting in this direction — coloured by direction, not by severity:
+   incoming updates are informational, unpublished work is yours to act on. */
+.adowiki-toolbar__sync-button--pull.is-highlighted {
+  border-color: var(--adowiki-accent);
+  color: var(--adowiki-accent);
+  background-color: color-mix(in srgb, var(--text-accent) 10%, transparent);
+}
+
+.adowiki-toolbar__sync-button--push.is-highlighted {
+  border-color: var(--interactive-accent);
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.adowiki-toolbar__sync-count {
+  padding: 0 0.35em;
+  border-radius: var(--radius-l);
+  background-color: color-mix(in srgb, var(--text-normal) 12%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+.adowiki-toolbar__sync-button--push.is-highlighted .adowiki-toolbar__sync-count {
+  background-color: color-mix(in srgb, var(--text-on-accent) 25%, transparent);
+}
+
+.adowiki-toolbar__sync-button.is-busy .adowiki-toolbar__sync-icon {
+  animation: adowiki-spin 1.2s linear infinite;
+}
+
+/* ------------------------------------------------------------- wiki changes pane */
+
+.adowiki-changes {
+  padding: 0 0 var(--size-4-4);
+}
+
+.adowiki-changes__actions {
+  display: flex;
+  gap: var(--size-2-2);
+  padding: var(--size-4-2) var(--size-4-3);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background-color: var(--background-secondary);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.adowiki-changes__action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2-1);
+  flex: 1;
+  justify-content: center;
+  font-size: var(--font-ui-smaller);
+  cursor: pointer;
+}
+
+.adowiki-changes__action--primary {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.adowiki-changes__action--primary:hover:not(:disabled) {
+  background-color: var(--interactive-accent-hover);
+}
+
+.adowiki-changes__action-icon {
+  display: inline-flex;
+}
+
+.adowiki-changes__action-icon svg {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+.adowiki-changes__section {
+  padding-top: var(--size-4-2);
+}
+
+.adowiki-changes__heading {
+  padding: var(--size-2-2) var(--size-4-3);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--adowiki-accent);
+}
+
+.adowiki-changes__empty {
+  padding: 0 var(--size-4-3) var(--size-2-2);
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.adowiki-changes__row {
+  display: flex;
+  align-items: center;
+  gap: var(--size-2-2);
+  padding: var(--size-2-1) var(--size-4-3);
+  border-radius: var(--radius-s);
+}
+
+.adowiki-changes__row.is-clickable:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.adowiki-changes__row--inert {
+  cursor: default;
+  color: var(--text-muted);
+}
+
+.adowiki-changes__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adowiki-changes__badge {
+  flex: 0 0 auto;
+  padding: 0 0.4em;
+  border-radius: var(--radius-s);
+  font-size: var(--font-ui-smaller);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background-color: color-mix(in srgb, var(--text-normal) 10%, transparent);
+  color: var(--adowiki-muted);
+}
+
+.adowiki-changes__badge--modified,
+.adowiki-changes__badge--renamed {
+  color: var(--adowiki-edited);
+  background-color: color-mix(in srgb, var(--adowiki-edited) 15%, transparent);
+}
+
+.adowiki-changes__badge--added,
+.adowiki-changes__badge--untracked {
+  color: var(--adowiki-new);
+  background-color: color-mix(in srgb, var(--adowiki-new) 15%, transparent);
+}
+
+.adowiki-changes__badge--deleted {
+  color: var(--adowiki-gone);
+  background-color: color-mix(in srgb, var(--adowiki-gone) 15%, transparent);
+}
+
+.adowiki-changes__badge--conflicted {
+  color: var(--adowiki-error);
+  background-color: color-mix(in srgb, var(--adowiki-error) 18%, transparent);
+}
+
+.adowiki-changes__toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: var(--size-4-4);
+  color: var(--text-faint);
+}
+
+.adowiki-changes__commit-text {
+  min-width: 0;
+}
+
+.adowiki-changes__subject {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: var(--line-height-tight);
+}
+
+.adowiki-changes__meta {
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+}
+
+.adowiki-changes__pages {
+  padding-left: var(--size-4-5);
+  border-left: 1px solid var(--background-modifier-border);
+  margin-left: var(--size-4-4);
+}
+
+/* -------------------------------------------------- pages that are not published yet
+
+   Explorer rows, wiki-tree rows and any other row carrying data-adowiki-change: the colour says
+   what kind of change it is, and the dot makes it visible without relying on colour alone. */
+
+[data-adowiki-change="modified"],
+[data-adowiki-change="renamed"] {
+  --adowiki-change-color: var(--adowiki-edited);
+}
+
+[data-adowiki-change="added"],
+[data-adowiki-change="untracked"] {
+  --adowiki-change-color: var(--adowiki-new);
+}
+
+[data-adowiki-change="deleted"] {
+  --adowiki-change-color: var(--adowiki-gone);
+}
+
+[data-adowiki-change="conflicted"] {
+  --adowiki-change-color: var(--adowiki-error);
+}
+
+.adowiki-changed .nav-file-title-content,
+.adowiki-changed .nav-folder-title-content,
+.adowiki-changed .adowiki-tree__title {
+  color: var(--adowiki-change-color, var(--adowiki-edited));
+}
+
+.adowiki-changed::after {
+  content: "●";
+  margin-left: auto;
+  padding-left: var(--size-2-2);
+  font-size: 0.7em;
+  line-height: 1;
+  color: var(--adowiki-change-color, var(--adowiki-edited));
+}
+
+/* The rendered table that replaces rows Obsidian would show as text. */
+.adowiki-table-block table {
+  margin: 0;
+}
+
+/* An action inside a notice — "Fix the name…" on a page Azure DevOps cannot open. */
+.adowiki-notice__action {
+  display: block;
+  margin-top: var(--size-2-2);
+  font-size: var(--font-ui-smaller);
+  padding: var(--size-2-1) var(--size-4-2);
+  cursor: pointer;
+}
+
+/* ---------------------------------------------------------- work-item suggester */
+
+.adowiki-workitem-suggestion {
+  display: flex;
+  align-items: baseline;
+  gap: var(--size-4-2);
+}
+
+.adowiki-workitem-suggestion__id {
+  color: var(--text-accent);
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.adowiki-workitem-suggestion__title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.adowiki-workitem-suggestion__meta {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  flex-shrink: 0;
+}
+
+.adowiki-cm-image img {
+  max-width: 100%;
+  vertical-align: bottom;
+}
+
+/* The destination of a resolvable ADO link, so it is obvious it can be followed. */
+.adowiki-cm-target {
+  color: var(--text-accent);
+}
+
+.adowiki-cm-ref {
+  cursor: pointer;
+}
+
+/* -------------------------------------------------- one explorer row per page */
+
+/* A page with subpages is a file *and* a folder; the folder row stands in for both. */
+.nav-file.adowiki-merged-row {
+  display: none;
+}
+
+.nav-folder-title.adowiki-page-folder {
+  cursor: pointer;
+}
+
+.nav-folder-title.adowiki-page-folder .nav-folder-title-content {
+  /* Same affordance as a file row: this one opens a page. */
+  color: var(--nav-item-color);
+}
+
+/* Obsidian highlights only file rows, so a merged row has to say "this is the open page". */
+.nav-folder-title.adowiki-page-folder.adowiki-active-page {
+  background-color: var(--nav-item-background-active, var(--background-modifier-hover));
+  font-weight: var(--nav-item-weight-active, var(--font-medium));
+}
+
+.nav-folder-title.adowiki-page-folder.adowiki-active-page .nav-folder-title-content {
+  color: var(--nav-item-color-active, var(--text-normal));
+}
+
+/* ------------------------------------------------------- compatibility pane */
+
+.adowiki-lint {
+  padding: 0;
+}
+
+.adowiki-lint__header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: var(--size-4-2) var(--size-4-3);
+  background-color: var(--background-secondary);
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+
+.adowiki-lint__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--size-2-2);
+}
+
+.adowiki-lint__scope {
+  display: inline-flex;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+}
+
+.adowiki-lint__scope-button {
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  color: var(--adowiki-muted);
+  font-size: var(--font-ui-smaller);
+  padding: var(--size-2-1) var(--size-4-2);
+  cursor: pointer;
+}
+
+.adowiki-lint__scope-button.is-active {
+  background-color: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.adowiki-lint__action {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--size-2-1);
+  font-size: var(--font-ui-smaller);
+  padding: var(--size-2-1) var(--size-4-2);
+  cursor: pointer;
+}
+
+.adowiki-lint__action svg {
+  width: var(--icon-xs);
+  height: var(--icon-xs);
+}
+
+.adowiki-lint__summary {
+  margin-top: var(--size-2-2);
+  color: var(--adowiki-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.adowiki-lint__filter {
+  display: flex;
+  gap: var(--size-2-1);
+  margin-top: var(--size-2-2);
+}
+
+.adowiki-lint__chip {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-l);
+  background: transparent;
+  box-shadow: none;
+  color: var(--adowiki-muted);
+  font-size: var(--font-ui-smaller);
+  padding: 0 var(--size-4-2);
+  cursor: pointer;
+}
+
+.adowiki-lint__chip.is-active {
+  border-color: var(--adowiki-accent);
+  color: var(--adowiki-accent);
+}
+
+.adowiki-lint__list {
+  padding: var(--size-4-2) 0 var(--size-4-4);
+}
+
+.adowiki-lint__file {
+  padding: var(--size-4-2) var(--size-4-3) var(--size-2-1);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  color: var(--adowiki-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.adowiki-lint__finding {
+  padding: var(--size-2-2) var(--size-4-3);
+  border-left: 3px solid transparent;
+}
+
+.adowiki-lint__finding:hover {
+  background-color: var(--background-modifier-hover);
+}
+
+.adowiki-lint__finding--error {
+  border-left-color: var(--adowiki-error);
+}
+
+.adowiki-lint__finding--warn {
+  border-left-color: var(--adowiki-warning);
+}
+
+.adowiki-lint__finding--info {
+  border-left-color: var(--adowiki-border);
+}
+
+.adowiki-lint__finding-main {
+  cursor: pointer;
+  line-height: var(--line-height-tight);
+}
+
+.adowiki-lint__severity {
+  display: inline-block;
+  margin-right: var(--size-2-2);
+  font-size: var(--font-ui-smaller);
+  font-weight: var(--font-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.adowiki-lint__severity--error {
+  color: var(--adowiki-error);
+}
+
+.adowiki-lint__severity--warn {
+  color: var(--adowiki-warning);
+}
+
+.adowiki-lint__severity--info {
+  color: var(--adowiki-muted);
+}
+
+.adowiki-lint__where {
+  margin-left: var(--size-2-2);
+  color: var(--text-faint);
+  font-size: var(--font-ui-smaller);
+  font-variant-numeric: tabular-nums;
+}
+
+.adowiki-lint__advice {
+  margin-top: var(--size-2-1);
+  color: var(--adowiki-muted);
+  font-size: var(--font-ui-smaller);
+  line-height: var(--line-height-tight);
+}
+
+.adowiki-lint__fix {
+  margin-top: var(--size-2-2);
+  font-size: var(--font-ui-smaller);
+  padding: var(--size-2-1) var(--size-4-2);
+  cursor: pointer;
+}
+
+.adowiki-lint__empty {
+  padding: var(--size-4-3);
+  color: var(--adowiki-muted);
+}
+
+/* Rules are a long list of toggles; without this they read as top-level settings. */
+.adowiki-settings__rule {
+  padding-top: var(--size-2-2);
+  padding-bottom: var(--size-2-2);
+  border-top: none;
+}
+
+.adowiki-settings__rule .setting-item-name {
+  font-size: var(--font-ui-smaller);
+  color: var(--adowiki-muted);
+}
+
+/* ------------------------------------------------------------- setup check */
+
+.adowiki-setup__ok {
+  padding: var(--size-4-3) 0;
+  color: var(--adowiki-muted);
+}
+
+.adowiki-setup__issue--error .setting-item-name {
+  color: var(--adowiki-error);
+}
+
+.adowiki-setup__issue--warn .setting-item-name {
+  color: var(--adowiki-warning);
+}
+
+/* --------------------------------------------------- keyboard row navigation */
+
+/*
+ * The three sidebar panes share one row-focus helper (util/rowKeyboardNav.ts), so they share one
+ * focus ring. `:focus-visible` rather than `:focus`: the helper moves focus programmatically on
+ * every redraw, and a plain `:focus` rule would draw a ring around a row nobody is navigating.
+ * `outline` rather than a border, so the ring costs no layout and cannot shift a row's text.
+ */
+.adowiki-tree__row:focus-visible,
+.adowiki-changes__row:focus-visible,
+.adowiki-lint__finding:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -2px;
+  border-radius: var(--radius-s);
+}
+
+/* The rows are made focusable at runtime; without this they would show a text caret. */
+.adowiki-tree__row,
+.adowiki-changes__row,
+.adowiki-lint__finding {
+  outline: none;
+}
+
+/* ------------------------------------------------------------- page activity */
+
+.adowiki-activity {
+  padding: var(--size-4-2) var(--size-4-3);
+  overflow-y: auto;
+}
+
+.adowiki-activity__page {
+  font-weight: var(--font-semibold);
+  margin-bottom: var(--size-4-3);
+  overflow-wrap: anywhere;
+}
+
+.adowiki-activity__section {
+  margin-bottom: var(--size-4-4);
+}
+
+.adowiki-activity__heading {
+  font-size: var(--font-ui-smaller);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--adowiki-muted);
+  margin-bottom: var(--size-4-2);
+}
+
+.adowiki-activity__empty,
+.adowiki-activity__problem {
+  color: var(--adowiki-muted);
+  font-size: var(--font-ui-small);
+  padding: var(--size-4-1) 0;
+}
+
+/* Not an error colour: "no token yet" is a setup step, not a failure. */
+.adowiki-activity__problem {
+  background: var(--adowiki-surface);
+  border-left: 2px solid var(--adowiki-accent);
+  border-radius: var(--radius-s);
+  padding: var(--size-4-2);
+  margin-bottom: var(--size-4-2);
+}
+
+.adowiki-activity__comment,
+.adowiki-activity__commit {
+  padding: var(--size-4-2);
+  border-radius: var(--radius-s);
+  margin-bottom: var(--size-4-1);
+  background: var(--adowiki-surface);
+}
+
+/* A reply is one flat list entry with a parentId; indenting is the whole of the nesting. */
+.adowiki-activity__comment--reply {
+  margin-left: var(--size-4-4);
+}
+
+.adowiki-activity__meta {
+  display: flex;
+  gap: var(--size-4-2);
+  font-size: var(--font-ui-smaller);
+  color: var(--adowiki-muted);
+}
+
+.adowiki-activity__author {
+  font-weight: var(--font-medium);
+}
+
+.adowiki-activity__text,
+.adowiki-activity__subject {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  margin-top: var(--size-4-1);
+}
+
+.adowiki-activity__composer {
+  margin-top: var(--size-4-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--size-4-2);
+  align-items: flex-start;
+}
+
+.adowiki-activity__input {
+  width: 100%;
+  resize: vertical;
+  font-family: inherit;
+}
+
+.adowiki-activity__hint {
+  font-size: var(--font-ui-smaller);
+  color: var(--adowiki-muted);
+}
+
+.adowiki-activity__comment:focus-visible,
+.adowiki-activity__commit:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -2px;
+}
