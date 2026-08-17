@@ -83,6 +83,7 @@ describe("plugin load", () => {
       "lint-vault",
       "open-lint-results",
       "setup-check",
+      "setup-wiki",
       "format-bold",
       "format-italic",
       "format-strikethrough",

@@ -174,6 +174,65 @@ export class GitService {
     return result.ok && result.stdout.trim().length === 0;
   }
 
+  // ------------------------------------------------- setting a wiki up in an existing folder
+
+  /**
+   * `git init` in the vault.
+   *
+   * A wiki is set up this way rather than with `git clone` because the vault already contains
+   * `.obsidian/`, and clone refuses a directory that is not empty ("destination path already
+   * exists and is not an empty directory"). init + fetch + checkout reaches the same state and
+   * leaves the Obsidian configuration where it is — verified against a real repository.
+   */
+  init(): Promise<GitResult> {
+    return this.run(["init"]);
+  }
+
+  addRemote(url: string, remote = "origin"): Promise<GitResult> {
+    return this.run(["remote", "add", remote, url]);
+  }
+
+  /** Branch names the server offers, without fetching anything. */
+  async remoteHeads(remote = "origin"): Promise<string[]> {
+    const result = await this.run(["ls-remote", "--heads", remote], {
+      network: true,
+      readOnly: true,
+    });
+    if (!result.ok) return [];
+    return result.stdout
+      .split("\n")
+      .map((line) => line.split("\t")[1] ?? "")
+      .filter((ref) => ref.startsWith("refs/heads/"))
+      .map((ref) => ref.slice("refs/heads/".length).trim())
+      .filter((name) => name.length > 0);
+  }
+
+  /**
+   * The branch the server's HEAD points at, which is the wiki's own branch — or null when the
+   * server does not say. A fresh `init` has no `origin/HEAD` to read, so this has to be asked.
+   */
+  async remoteDefaultBranch(remote = "origin"): Promise<string | null> {
+    const result = await this.run(["ls-remote", "--symref", remote, "HEAD"], {
+      network: true,
+      readOnly: true,
+    });
+    if (!result.ok) return null;
+    for (const line of result.stdout.split("\n")) {
+      const match = /^ref:\s+refs\/heads\/(.+?)\s+HEAD$/.exec(line.trim());
+      if (match?.[1]) return match[1];
+    }
+    return null;
+  }
+
+  /**
+   * Check out a fetched branch, tracking its remote counterpart. Not destructive: git refuses
+   * rather than overwrite an untracked file, which is the protection that lets this run in a
+   * folder the user already had open.
+   */
+  checkoutTracking(branch: string, remote = "origin"): Promise<GitResult> {
+    return this.run(["checkout", "-t", `${remote}/${branch}`]);
+  }
+
   async currentBranch(): Promise<string | null> {
     const result = await this.run(["rev-parse", "--abbrev-ref", "HEAD"], { readOnly: true });
     if (!result.ok) return null;

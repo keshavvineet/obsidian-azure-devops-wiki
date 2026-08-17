@@ -14,6 +14,12 @@ export interface AdoWikiSettings {
   // git
   gitEnabled: boolean;
   wikiBranch: string;
+  /**
+   * Set once the user has been offered the first-run wizard and said no. Only suppresses the
+   * *unprompted* offer — the command stays available — so a vault that is deliberately empty
+   * stops nagging without hiding the feature.
+   */
+  setupPromptDismissed: boolean;
   autoRefreshOnOpen: boolean;
   autoRefreshIntervalMin: number;
   /** Publish pending edits when Obsidian quits. Off by default: it runs without supervision. */
@@ -68,6 +74,7 @@ export const DEFAULT_SETTINGS: AdoWikiSettings = {
   pat: "",
   gitEnabled: true,
   wikiBranch: DEFAULT_WIKI_BRANCH,
+  setupPromptDismissed: false,
   autoRefreshOnOpen: true,
   autoRefreshIntervalMin: 0,
   autoSyncOnClose: false,

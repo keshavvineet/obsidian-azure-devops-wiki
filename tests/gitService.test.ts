@@ -1,4 +1,4 @@
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
@@ -189,6 +189,63 @@ describe.skipIf(!gitAvailable())("GitService", () => {
     expect(result.ok).toBe(false);
     expect(result.code).toBeGreaterThan(0);
     expect(result.stderr).not.toBe("");
+  });
+
+  it("sets a wiki up inside a folder Obsidian is already using as a vault", async () => {
+    // The whole point of init + fetch + checkout over `git clone`: the vault is not empty, so
+    // clone refuses it outright. Asserted below, so the workaround never becomes cargo cult.
+    const vault = mkdtempSync(join(tmpdir(), "adowiki-vault-"));
+    mkdirSync(join(vault, ".obsidian", "plugins"), { recursive: true });
+    writeFileSync(join(vault, ".obsidian", "app.json"), "{}");
+    const remote = fixture.git(fixture.alice, "remote", "get-url", "origin").trim();
+
+    try {
+      const clone = await new GitService(vault).run(["clone", remote, "."]);
+      expect(clone.ok).toBe(false);
+
+      const setup = new GitService(vault);
+      expect((await setup.init()).ok).toBe(true);
+      expect((await setup.addRemote(remote)).ok).toBe(true);
+      expect(await setup.remoteHeads()).toContain(WIKI_BRANCH);
+      expect((await setup.fetch()).ok).toBe(true);
+      expect((await setup.checkoutTracking(WIKI_BRANCH)).ok).toBe(true);
+
+      // The wiki arrived...
+      expect(existsSync(join(vault, "Home.md"))).toBe(true);
+      expect(existsSync(join(vault, ".order"))).toBe(true);
+      // ...without disturbing what Obsidian had already put there.
+      expect(existsSync(join(vault, ".obsidian", "app.json"))).toBe(true);
+
+      // And it is a state the sync guard rails accept: at the root, on a tracked branch.
+      const status = await setup.status();
+      expect(status.branch).toBe(WIKI_BRANCH);
+      expect(status.upstream).toBe(`origin/${WIKI_BRANCH}`);
+      expect(await setup.isAtRepoRoot()).toBe(true);
+    } finally {
+      rmSync(vault, { recursive: true, force: true });
+    }
+  });
+
+  it("refuses to check out over a file that is already there", async () => {
+    // The protection that makes setting up in an existing folder safe: git will not clobber an
+    // untracked file, so a vault with notes in it fails loudly instead of losing them.
+    const vault = mkdtempSync(join(tmpdir(), "adowiki-vault-"));
+    writeFileSync(join(vault, "Home.md"), "# My own notes\n");
+    const remote = fixture.git(fixture.alice, "remote", "get-url", "origin").trim();
+
+    try {
+      const setup = new GitService(vault);
+      await setup.init();
+      await setup.addRemote(remote);
+      await setup.fetch();
+
+      const checkout = await setup.checkoutTracking(WIKI_BRANCH);
+
+      expect(checkout.ok).toBe(false);
+      expect(readFileSync(join(vault, "Home.md"), "utf8")).toBe("# My own notes\n");
+    } finally {
+      rmSync(vault, { recursive: true, force: true });
+    }
   });
 });
 

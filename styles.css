@@ -997,6 +997,36 @@ div.adowiki-cm-block {
   color: var(--adowiki-warning);
 }
 
+/* ------------------------------------------------------- first-run wiki setup */
+
+/* The issue classes above colour a Setting's name; the wizard puts them on a plain
+   div, which needs the colour on the element itself. */
+div.adowiki-setup__issue--error {
+  color: var(--adowiki-error);
+}
+
+.adowiki-setup__hint {
+  color: var(--adowiki-muted);
+  font-size: var(--font-ui-smaller);
+}
+
+.adowiki-setup__message {
+  padding: var(--size-4-2) 0;
+}
+
+/* A clone URL is long and the middle of it is what tells the user they pasted the
+   wrong one, so the field takes the whole dialog rather than truncating. */
+.adowiki-setup__url {
+  width: 100%;
+  font-family: var(--font-monospace);
+  font-size: var(--font-ui-smaller);
+}
+
+.adowiki-setup__url + .setting-item-control,
+.adowiki-setup .setting-item:has(.adowiki-setup__url) {
+  display: block;
+}
+
 /* --------------------------------------------------- keyboard row navigation */
 
 /*

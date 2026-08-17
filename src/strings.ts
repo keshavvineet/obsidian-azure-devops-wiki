@@ -23,6 +23,7 @@ export const S = {
     lintVault: "Check every page for Azure DevOps problems",
     openLintResults: "Show Azure DevOps compatibility results",
     setupCheck: "Check vault setup",
+    setupWiki: "Set up a wiki in this vault",
   },
   /** The compatibility linter (FR-8). */
   lint: {
@@ -113,6 +114,75 @@ export const S = {
     rootDesc:
       "Azure DevOps page paths are relative to the repository root, so the vault has to be " +
       "opened at that folder or every link resolves one level off.",
+  },
+  /** The first-run flow that downloads a wiki into an empty vault. */
+  wizard: {
+    title: "Set up your Azure DevOps wiki",
+    intro:
+      "This folder is empty, so there is nothing to edit yet. Paste your wiki's clone address " +
+      "below and the plugin will download it here — you do not need to use git yourself.",
+    whereToFind:
+      "In Azure DevOps, open your wiki, click the … menu beside its name and choose " +
+      "Clone wiki, then copy the address it shows.",
+    urlLabel: "Wiki clone address",
+    urlPlaceholder: "https://dev.azure.com/contoso/MyProject/_git/MyProject.wiki",
+    setUp: "Download the wiki",
+    notNow: "Not now",
+    dontAskAgain: "Do not ask again for this vault",
+    done: "Done",
+    openCheck: "Check vault setup",
+
+    // What the plugin is doing, shown one line at a time so a slow network looks alive.
+    stepInit: "Preparing this folder…",
+    stepRemote: "Pointing it at Azure DevOps…",
+    stepBranch: "Asking which branch the wiki uses…",
+    stepFetch: "Downloading pages — this can take a minute…",
+    stepCheckout: "Writing the pages into this folder…",
+    stepFinish: "Tidying up…",
+    success: (pages: number, branch: string) =>
+      `Your wiki is ready: ${pages} ${pages === 1 ? "page" : "pages"} on branch ${branch}. ` +
+      "Use Get updates and Publish from now on.",
+
+    /** Why a pasted address cannot be used. Keyed by `CloneUrlProblem`. */
+    problem: {
+      empty: "Paste your wiki's clone address to continue.",
+      "not-a-url": "That does not look like a web address. It should start with https://",
+      "portal-page-url":
+        "That is the address of the wiki page you were reading, not its clone address. Use the " +
+        "… menu beside the wiki's name and choose Clone wiki.",
+      ssh:
+        "That is the SSH address, which needs a key set up first. Switch the Clone wiki dialog " +
+        "to HTTPS and copy that address instead.",
+      "not-a-git-url":
+        "A wiki clone address has /_git/ in it. Use the … menu beside the wiki's name and " +
+        "choose Clone wiki.",
+      "missing-parts": "That address is missing the wiki's name. Copy the whole thing.",
+    },
+
+    /** Why this vault cannot be set up at all. Keyed by `CloneBlocker`. */
+    blocker: {
+      "no-git":
+        "Git is not installed, or not on the PATH. Ask IT to install Git for Windows, then " +
+        "restart Obsidian.",
+      "already-a-clone":
+        "This vault is already a git clone, so there is nothing to download. Use Get updates.",
+      "inside-another-repo":
+        "This folder sits inside another git repository, so setting a wiki up here would " +
+        "damage it. Close this vault and open an empty folder somewhere else instead.",
+      "vault-not-empty":
+        "This vault already has notes in it. Downloading a wiki could overwrite them, so open " +
+        "an empty folder as a vault and try again there.",
+    },
+
+    failedInit: "Could not prepare this folder for git.",
+    failedRemote: "Could not save the wiki address.",
+    failedFetch:
+      "Could not download the wiki. Check the address and your connection or VPN. If a " +
+      "sign-in window opened, it may be hidden behind Obsidian.",
+    failedCheckout: "Downloaded the wiki, but could not write the pages into this folder.",
+    ambiguousBranch:
+      "This repository has several branches and none of them is a wiki branch, so the plugin " +
+      "cannot tell which to use. Set the wiki branch in the plugin settings, then use Get updates.",
   },
   /** Labels for the ADO syntax the plugin renders in place of raw text. */
   render: {

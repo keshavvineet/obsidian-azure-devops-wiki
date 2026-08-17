@@ -29,6 +29,7 @@ import { CompatLinter } from "./lint/compatLinter";
 import { countBySeverity } from "./lint/lintEngine";
 import { LINT_VIEW, LintView, type LintScope } from "./lint/lintView";
 import { SetupCheck } from "./setup/setupCheck";
+import { WikiSetupWizard } from "./setup/wikiSetupWizard";
 import { AdoLinkService } from "./links/adoLinkService";
 import { wikiRelativePath, wikiWebUrl } from "./links/adoWebUrl";
 import { adoLivePreview } from "./links/livePreviewExtension";
@@ -320,6 +321,48 @@ export default class AdoWikiPlugin extends Plugin {
     }
     await this.adoptWikiBranch();
     this.gitBar?.scheduleStartupRefresh();
+    await this.offerWikiSetup();
+  }
+
+  /**
+   * Offer the first-run wizard, once, in a vault that has nothing in it and is not a clone.
+   *
+   * Deferred to here rather than `onload` so the offer is made against a fully indexed vault:
+   * "are there any pages?" is the question that decides it, and asking too early answers "no"
+   * for every wiki. `shouldOfferUnprompted` refuses in every other case, so an existing clone
+   * or a vault holding somebody's notes is never interrupted.
+   */
+  private async offerWikiSetup(): Promise<void> {
+    if (this.settings.setupPromptDismissed || !this.settings.gitEnabled || !this.git) return;
+    const wizard = this.wikiSetupWizard();
+    if (!(await wizard.shouldOfferUnprompted())) return;
+    wizard.open();
+  }
+
+  wikiSetupWizard(): WikiSetupWizard {
+    return new WikiSetupWizard(this.app, {
+      git: this.git,
+      applySettings: async (target, branch) => {
+        this.settings.organizationUrl = target.organizationUrl;
+        this.settings.project = target.project;
+        this.settings.wikiName = target.wikiName;
+        this.settings.wikiBranch = branch;
+        await this.saveSettings();
+      },
+      // The pages arrived from git, not through the Vault API, and attachments are dotfiles that
+      // fire no vault event at all — so the index and the attachment list are both rebuilt.
+      afterSetup: async () => {
+        await this.index.rebuild();
+        await this.links.reloadAttachments();
+        this.applyTitleDecoration();
+        await this.gitBar?.refreshStatus();
+      },
+      openSetupCheck: () => void new SetupCheck(this.app, this.git).run(),
+      suppressPrompt: async () => {
+        this.settings.setupPromptDismissed = true;
+        await this.saveSettings();
+      },
+    });
   }
 
   /**
@@ -701,6 +744,12 @@ export default class AdoWikiPlugin extends Plugin {
       id: "setup-check",
       name: S.commands.setupCheck,
       callback: () => void new SetupCheck(this.app, this.git).run(),
+    });
+
+    this.addCommand({
+      id: "setup-wiki",
+      name: S.commands.setupWiki,
+      callback: () => this.wikiSetupWizard().open(),
     });
 
     this.registerFormatCommands();

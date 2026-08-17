@@ -21,6 +21,27 @@ import type { GitStatus } from "./gitStatus";
  *   - **A branch the user chose themselves is never overridden** — adoption only fills in a
  *     setting still sitting at its factory default.
  */
+/**
+ * Which branch to check out when setting a vault up from a clone URL, or null when the server's
+ * answer is too ambiguous to guess from.
+ *
+ * A fresh `git init` has no `origin/HEAD`, so the server has to be asked. `ls-remote --symref`
+ * answers directly and is preferred; measured against a local stand-in it can come back empty, so
+ * the ladder falls through to the branch list: one branch is unambiguous, and beyond that only
+ * the two names Azure DevOps gives a provisioned wiki are safe to assume.
+ */
+export function chooseCloneBranch(symrefBranch: string | null, heads: readonly string[]): string | null {
+  if (symrefBranch !== null && heads.includes(symrefBranch)) return symrefBranch;
+  // Trust a symref even for a repository that offered no head list, since it is the server's own
+  // statement about where HEAD points.
+  if (symrefBranch !== null && heads.length === 0) return symrefBranch;
+  if (heads.length === 1) return heads[0] ?? null;
+  for (const candidate of ["wikiMain", "wikiMaster"]) {
+    if (heads.includes(candidate)) return candidate;
+  }
+  return null;
+}
+
 export function branchToAdopt(
   status: GitStatus,
   configuredBranch: string,

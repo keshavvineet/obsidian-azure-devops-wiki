@@ -14,12 +14,12 @@ renders correctly in the portal; `git diff` only ever shows what you actually ed
 
 ## Install
 
-1. **Clone the wiki** — somewhere *outside* OneDrive, Dropbox or Google Drive (they lock
-   files while uploading and will corrupt the repository):
+You need Git installed ([Git for Windows](https://git-scm.com/download/win)), but you do not
+need to know how to use it — the plugin downloads the wiki for you.
 
-   ```bash
-   git clone https://dev.azure.com/{org}/{project}/_git/{project}.wiki C:\wikis\{project}.wiki
-   ```
+1. **Make an empty folder** for the wiki and open it in Obsidian as a vault (*Open folder as
+   vault*). Put it somewhere *outside* OneDrive, Dropbox or Google Drive — they lock files
+   while uploading and will corrupt the repository — and not inside another git repository.
 
 2. **Install the plugin.** Either:
    - **BRAT** (recommended during the beta): install the *Obsidian42 – BRAT* community
@@ -29,16 +29,22 @@ renders correctly in the portal; `git diff` only ever shows what you actually ed
      `{vault}/.obsidian/plugins/azure-devops-wiki/`.
    - **From source:** `npm install && npm run build && npm run install-plugin -- "C:\path\to\vault"`.
 
-3. **Open the clone as a vault** in Obsidian, turn off Restricted mode, and enable
-   **Azure DevOps Wiki**.
+3. **Turn off Restricted mode** and enable **Azure DevOps Wiki**.
 
-4. **Run `Check vault setup`** from the Command Palette (`Ctrl+P`). It adds `.obsidian/` to
-   `.gitignore`, points Obsidian's link settings at the format ADO uses, and warns you if the
-   clone is somewhere that will damage it.
+4. **Paste your wiki's address.** Because the folder is empty, the plugin offers to set it up
+   as soon as it loads. In Azure DevOps open your wiki, click the **…** menu beside its name,
+   choose **Clone wiki**, and paste the address it shows. The plugin works out the branch, fills
+   in the organization, project and wiki name, and downloads the pages.
 
-5. **Fill in the connection settings** (Settings → Azure DevOps Wiki): organization URL,
-   project, wiki name. A personal access token is optional — it is only needed to search work
-   items by title and to show their names on hover.
+   Nothing appeared? Run **Set up a wiki in this vault** from the Command Palette (`Ctrl+P`).
+   Already have a clone? Just open it as a vault instead — steps 1 and 4 are for starting fresh.
+
+5. **Run `Check vault setup`** (`Ctrl+P`). It points Obsidian's link settings at the format ADO
+   uses, stops git rewriting line endings, and warns you if the clone is somewhere that will
+   damage it.
+
+6. **Optional: a personal access token** (Settings → Azure DevOps Wiki). Only needed to search
+   work items by title, show their names on hover, and read page comments.
 
 ---
 
