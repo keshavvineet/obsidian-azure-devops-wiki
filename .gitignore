@@ -17,3 +17,8 @@ Performance Trace/
 
 .DS_Store
 Thumbs.db
+
+# Scratch Obsidian vaults used to test the packaged plugin (BRAT installs, clean-vault checks).
+# Note: gitignore paths always use `/` — a trailing `\` is an escape character and matches
+# nothing, so `Test\` silently failed to ignore anything.
+/Test/
