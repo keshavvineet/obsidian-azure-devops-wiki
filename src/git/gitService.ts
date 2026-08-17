@@ -160,6 +160,20 @@ export class GitService {
     return result.ok ? result.stdout.trim() : null;
   }
 
+  /**
+   * Whether the working directory *is* the repository root, rather than a folder inside one.
+   *
+   * Asked of git rather than by comparing `repoRoot()` with `cwd`, because those two strings
+   * disagree for the same directory: Windows hands out 8.3 short names (`C:\Users\VINEET~1\…`)
+   * where git reports the long form (`C:/Users/VineetKhurana/…`), and normalising slashes and
+   * case cannot reconcile them. `--show-prefix` is the cwd relative to the root, so it is empty
+   * exactly at the root — no path comparison at all.
+   */
+  async isAtRepoRoot(): Promise<boolean> {
+    const result = await this.run(["rev-parse", "--show-prefix"], { readOnly: true });
+    return result.ok && result.stdout.trim().length === 0;
+  }
+
   async currentBranch(): Promise<string | null> {
     const result = await this.run(["rev-parse", "--abbrev-ref", "HEAD"], { readOnly: true });
     if (!result.ok) return null;

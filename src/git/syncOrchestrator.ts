@@ -258,6 +258,17 @@ export class SyncOrchestrator {
       return null;
     }
 
+    // `isRepo` is true for any folder *inside* a repository, because git searches upwards. A
+    // vault opened one level down — or, as happened in testing, a scratch vault created inside
+    // a checkout of some unrelated project — therefore looked like a healthy wiki: Get updates
+    // fetched that repository and truthfully reported success while pulling no pages. Publish
+    // is the dangerous direction, since it would commit the vault's subtree and push it there.
+    // A wiki clone always has the vault at its root, so anything else is not this plugin's job.
+    if (!(await git.isAtRepoRoot())) {
+      this.notifyError(options, S.git.errors.notRepoRoot((await git.repoRoot()) ?? "?"));
+      return null;
+    }
+
     const inProgress = await git.inProgressState();
     if (inProgress === "rebase") {
       // Left over from a previous session or a terminal: finish it before anything else.

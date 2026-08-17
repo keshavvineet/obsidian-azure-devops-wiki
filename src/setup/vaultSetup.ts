@@ -194,6 +194,12 @@ export function gitignoreAddition(gitignore: string | null): string {
   return `${separator}${heading}${missing.join("\n")}\n`;
 }
 
+/**
+ * Good enough to *report* a mismatched root, which is all this advisory check does. It cannot be
+ * trusted to *permit* an operation: on Windows the same directory can reach us as an 8.3 short
+ * name from Obsidian and as its long form from git, and no normalising fixes that — so the sync
+ * guard rail asks git itself (`GitService.isAtRepoRoot`) rather than comparing strings.
+ */
 function samePath(a: string, b: string): boolean {
   const normalize = (path: string): string =>
     path.replace(/\\/g, "/").replace(/\/+$/, "").toLowerCase();

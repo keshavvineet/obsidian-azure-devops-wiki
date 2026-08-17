@@ -227,6 +227,23 @@ describe.skipIf(!gitAvailable())("SyncOrchestrator", () => {
     expect(ui.errors[0]).toContain("not a git clone");
   });
 
+  it("refuses when the vault is a folder inside someone else's repository", async () => {
+    // `git` searches upwards, so a vault one level down passes every other guard rail: it is a
+    // repository, on a branch, with an upstream. Reported from testing as "Get updates says it
+    // updated but nothing is pulled" — it had fetched the enclosing project instead.
+    fixture.write(fixture.alice, "Notes/Scratch.md", "# Not a wiki\n");
+    const inside = new SyncOrchestrator({
+      git: new GitService(`${fixture.alice}/Notes`),
+      ui,
+      settings: () => ({ wikiBranch: branch, commitMessageTemplate: "" }),
+    });
+
+    expect((await inside.refresh()).outcome).toBe("blocked");
+    expect(ui.errors[0]).toContain("inside a different git repository");
+    // Publish is the direction that would have done damage, so it must refuse too.
+    expect((await inside.sync()).outcome).toBe("blocked");
+  });
+
   it("keeps the work locally when Azure DevOps cannot be reached", async () => {
     fixture.write(fixture.alice, "Home.md", "# Home\n\nWritten on a train\n");
     fixture.git(fixture.alice, "remote", "set-url", "origin", `${fixture.root}/gone.git`);

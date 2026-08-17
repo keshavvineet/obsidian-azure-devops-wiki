@@ -126,6 +126,17 @@ strings, never destructive commands). Details: ARCHITECTURE.md.
 - **Obsidian does not render reading mode in an occluded or background Electron window.** Every
   measurement comes back empty, which looks exactly like a plugin bug — verify against the plugin
   *disabled* before believing it, and restart the window to get a real reading.
+- **Never compare a git path with an Obsidian path as strings.** Windows can hand the same
+  directory to us two ways — Obsidian's adapter returns the 8.3 short name
+  (`C:\Users\VINEET~1\…`) while git reports the long form (`C:/Users/VineetKhurana/…`) — so
+  normalising slashes, trailing separators and case still leaves them unequal. Measured, not
+  assumed: it made 13 sync tests fail by blocking legitimate repos. Ask git the question instead
+  (`rev-parse --show-prefix` is empty exactly at the repository root → `isAtRepoRoot()`).
+- **`isRepo()` is true for any folder *inside* a repository** — git searches upwards. A vault
+  opened one level down, or a scratch vault created inside a checkout of something else, passes
+  every other guard rail (it is a repo, on a branch, with an upstream), so Refresh fetched the
+  wrong repository and truthfully reported success while pulling nothing. `checkGuardRails`
+  requires the vault to be the repository *root*.
 - **`git status` is not "what did I change".** Obsidian saves LF, Git for Windows checks out CRLF
   (`core.autocrlf=true` by default), and every edited page is then reported modified for ever with
   `git diff` showing nothing. Intersect with `git diff --name-only` before showing anything to a

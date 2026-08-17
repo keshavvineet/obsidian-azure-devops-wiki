@@ -509,6 +509,10 @@ export const S = {
       notARepo:
         "This vault is not a git clone, so there is nothing to sync. Open the folder your " +
         "wiki was cloned into.",
+      notRepoRoot: (root: string) =>
+        `This vault sits inside a different git repository (${root}), so Get updates and ` +
+        "Publish would act on that repository instead of your wiki. Open the wiki clone " +
+        "itself as the vault.",
       operationInProgress: (state: string) =>
         `Git is in the middle of a ${state} in this folder. Ask an engineer to finish it, ` +
         "then try again.",
